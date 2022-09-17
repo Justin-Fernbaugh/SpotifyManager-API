@@ -49,7 +49,7 @@ Router.get('/callback', (req, res) => {
 
   SpotifyAPI
     .authorizationCodeGrant(code)
-    .then(data => {
+    .then(async data => {
       // console.log("body of request", data.body['expires_in']);
       const access_token = data.body['access_token'];
       const refresh_token = data.body['refresh_token'];
@@ -58,23 +58,16 @@ Router.get('/callback', (req, res) => {
       SpotifyAPI.setAccessToken(access_token);
       SpotifyAPI.setRefreshToken(refresh_token);
 
-      console.log('access_token:', access_token);
-      console.log('refresh_token:', refresh_token);
+      // console.log('access_token:', access_token);
+      // console.log('refresh_token:', refresh_token);
 
       console.log(
         `Sucessfully retreived access token. Expires in ${expires_in} s.`
       );
 
-      // Get Elvis' albums
-      SpotifyAPI.getArtistAlbums('43ZHCT0cAZBISjO8DG9PnE').then(
-        function(data) {
-          console.log('Artist albums', data.body);
-        },
-        function(err) {
-          console.error(err);
-        }
-      );
-      res.send('Success! You can now close the window.');
+      const accessToken = encodeURIComponent(data.body['access_token']);
+      const refreshToken = encodeURIComponent(data.body['refresh_token']);
+      res.redirect(`/?accessToken=${accessToken}&refreshToken=${refreshToken}`);
 
       setInterval(async () => {
         const data = await SpotifyAPI.refreshAccessToken();

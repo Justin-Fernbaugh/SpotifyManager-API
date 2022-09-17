@@ -15,7 +15,15 @@ const SpotifyAPI = new SpotifyWebApi({
 
 app.use('/', authorizationRoutes(SpotifyAPI));
 app.use('/api', playlistRoutes(SpotifyAPI));
+app.get('/', (req, res) => {
+	const { accessToken, refreshToken } = req.query;
+	// console.log(accessToken + "refresh" + refreshToken);
+	if(accessToken && refreshToken){
+		res.send(`Welcome to the backend accessToken: ${accessToken} refreshToken: ${refreshToken}`);
+	}
 
+	res.send('Welcome to the backend');
+})
 app.listen(PORT, () => {
 	console.log(`Listening at ${PORT}`);
 })
