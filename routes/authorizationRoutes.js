@@ -49,9 +49,7 @@ module.exports = (SpotifyAPI) => {
   });
   
 Router.get('/callback', (req, res) => {
-  const error = req.query.error;
-  const code = req.query.code;
-  const state = req.query.state;
+  const {error, code, state } = req.query;
 
   if (error) {
     console.error('Callback Error:', error);
