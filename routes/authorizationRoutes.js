@@ -31,9 +31,21 @@ Router.get('/health', (req, res) => {
 });
 
 module.exports = (SpotifyAPI) => {
-  //
   Router.get('/login', (req, res) => {
     res.redirect(SpotifyAPI.createAuthorizeURL(scopes));
+  });
+
+  Router.get('/refresh', async (req, res) => {
+    const { refreshToken } = req.query;
+    if(!refreshToken) res.status(400).send('Bad request, refreshToken must be supplied.');
+    SpotifyAPI.setRefreshToken(refreshToken);
+    try {
+      const data = await SpotifyAPI.refreshAccessToken();
+      res.json({'accessToken': data.body['access_token'], 'refreshToken': data.body['refresh_token']});
+    } catch(error) {
+      console.log(`Error: ${error}`);
+      res.status(500).send('Error occured refreshing access token.');
+    }
   });
   
 Router.get('/callback', (req, res) => {
@@ -50,33 +62,18 @@ Router.get('/callback', (req, res) => {
   SpotifyAPI
     .authorizationCodeGrant(code)
     .then(async data => {
-      // console.log("body of request", data.body['expires_in']);
+      //Get tokens from body of response
       const access_token = data.body['access_token'];
       const refresh_token = data.body['refresh_token'];
       const expires_in = data.body['expires_in'];
 
-      SpotifyAPI.setAccessToken(access_token);
-      SpotifyAPI.setRefreshToken(refresh_token);
-
-      // console.log('access_token:', access_token);
-      // console.log('refresh_token:', refresh_token);
-
-      console.log(
-        `Sucessfully retreived access token. Expires in ${expires_in} s.`
-      );
-
-      const accessToken = encodeURIComponent(data.body['access_token']);
-      const refreshToken = encodeURIComponent(data.body['refresh_token']);
-      res.redirect(`/?accessToken=${accessToken}&refreshToken=${refreshToken}`);
-
-      setInterval(async () => {
-        const data = await SpotifyAPI.refreshAccessToken();
-        const access_token = data.body['access_token'];
-
-        console.log('The access token has been refreshed!');
-        console.log('access_token:', access_token);
-        SpotifyAPI.setAccessToken(access_token);
-      }, expires_in / 2 * 1000);
+      try {
+        //Send tokens back in JSON response
+        res.json({'accessToken': data.body['access_token'], 'refreshToken': data.body['refresh_token']});
+      } catch(error) {
+        console.log(`Error: ${error}`);
+        res.status(500).send('Error occured sending tokens.');
+      }
     })
     .catch(error => {
       console.error('Error getting Tokens:', error);
