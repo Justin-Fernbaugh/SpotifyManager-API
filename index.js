@@ -13,6 +13,9 @@ const SpotifyAPI = new SpotifyWebApi({
 	clientSecret: process.env.SPOTIFY_SECRET,
 	redirectUri: process.env.REDIRECT_URL,
 });
+
+app.use(express.json());
+
 try {
 	app.use('/', authorizationRoutes(SpotifyAPI));
 	app.use('/api', checkTokens, playlistRoutes(SpotifyAPI));

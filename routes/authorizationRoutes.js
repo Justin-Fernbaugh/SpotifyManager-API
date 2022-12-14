@@ -31,6 +31,11 @@ Router.get('/health', (req, res) => {
 });
 
 module.exports = (SpotifyAPI) => {
+  Router.get('/authorize', (req, res) => {
+    res.send(SpotifyAPI.createAuthorizeURL(scopes));
+  });
+
+  //entrypoint used to redirect for accessToken
   Router.get('/login', (req, res) => {
     res.redirect(SpotifyAPI.createAuthorizeURL(scopes));
   });
@@ -67,7 +72,8 @@ Router.get('/callback', (req, res) => {
 
       try {
         //Send tokens back in JSON response
-        res.json({'accessToken': data.body['access_token'], 'refreshToken': data.body['refresh_token']});
+        // res.json({'accessToken': data.body['access_token'], 'refreshToken': data.body['refresh_token']});
+        res.redirect(`http://localhost:3000/?accessToken=${access_token}&refreshToken=${refresh_token}`);
       } catch(error) {
         console.log(`Error: ${error}`);
         res.status(500).send('Error occured sending tokens.');
