@@ -10,14 +10,15 @@ module.exports = (SpotifyAPI) => {
 
 	Router.get('/playlist/all', async (req, res) => {
 		const {accessToken, refreshToken} = req.query;
+		if(!accessToken) {
+			console.log("No access or refresh token passed.");
+			// console.log(`AccessToken: ${accesstoken} \n refreshToken: ${refreshToken}`);
+			return;
+		}
 		SpotifyAPI.setAccessToken(accessToken);
-		SpotifyAPI.setRefreshToken(refreshToken);
 		
 		try {
-			console.log('before');
-			console.log('after');
 			const user = await SpotifyAPI.getMe();
-			console.log('User request', user);
 
 			SpotifyAPI.getUserPlaylists(user.body['display_name'])
 			.then(function(data) {
@@ -29,8 +30,21 @@ module.exports = (SpotifyAPI) => {
 			});
 		} catch(error) {
 			console.log(`Error: ${error}`);
-			const data = await SpotifyAPI.refreshAccessToken();
-			SpotifyAPI.setAccessToken(data.body['access_token']);
+			res.status(401).send('Token has expired; Refresh token and try again.');
+		}
+	})
+
+	Router.post('/playlist/', (req, res) => {
+		const { accessToken, refreshToken } = req.query;
+		SpotifyAPI.setAccessToken(accessToken);
+		const { playlist, tracks } = req.body;
+
+		try {
+			const song = SpotifyAPI.addTracksToPlaylist(playlist, tracks)
+			console.log('Added tracks ', tracks, " to ", playlist);
+			res.send(song);
+		} catch(error) {
+			console.log(`Error: ${error}`);
 			res.status(401).send('Token has expired; Refresh token and try again.');
 		}
 	})
